@@ -258,3 +258,68 @@
       border:1px solid var(--line);
       background: rgba(0,0,0,.18);
       color: var(--text);
+      outline: none;
+      font: 14px/1.2 var(--font);
+    }
+    textarea{min-height: 96px;resize: vertical;font-family: var(--mono);font-size:12px}
+    input:focus,select:focus,textarea:focus{border-color: rgba(119,192,255,.40)}
+
+    .toast-wrap{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      z-index: 9999;
+      max-width: 420px;
+    }
+    .toast{
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(10,15,32,.86);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      padding: 12px 12px;
+      display:flex;
+      gap: 10px;
+      align-items:flex-start;
+      backdrop-filter: blur(10px);
+    }
+    .toast .i{
+      width: 32px;height:32px;border-radius: 14px;
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      font-family: var(--mono);
+      font-size: 12px;
+      flex:0 0 auto;
+    }
+    .toast.ok .i{border-color: rgba(60,255,198,.20); background: rgba(60,255,198,.08)}
+    .toast.bad .i{border-color: rgba(255,106,139,.22); background: rgba(255,106,139,.08)}
+    .toast.warn .i{border-color: rgba(255,211,142,.22); background: rgba(255,211,142,.07)}
+    .toast .t{min-width:0}
+    .toast .t b{display:block;margin-bottom:2px}
+    .toast .t div{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.6px}
+    .tag{
+      display:inline-flex;align-items:center;gap:8px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: rgba(255,255,255,.88);
+      font-size: 12px;
+    }
+    .tag.accent{border-color: rgba(119,192,255,.30); background: rgba(119,192,255,.10)}
+    .tag.good{border-color: rgba(60,255,198,.24); background: rgba(60,255,198,.09)}
+    .tag.warn{border-color: rgba(255,211,142,.24); background: rgba(255,211,142,.09)}
+    .tag.bad{border-color: rgba(255,106,139,.26); background: rgba(255,106,139,.09)}
+
+    .spark{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
