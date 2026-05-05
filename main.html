@@ -323,3 +323,68 @@
       align-items:center;
       gap: 10px;
     }
+    .spark canvas{
+      width: 140px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(0,0,0,.14);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .spark .m{
+      display:flex;flex-direction:column;gap:2px
+    }
+    .spark .m b{font-size:13px}
+    .spark .m span{color:var(--muted);font-size:12px}
+
+    .footer{
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .footer .links{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+
+    .split{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:space-between;
+    }
+
+    .mono{font-family: var(--mono)}
+    .right{text-align:right}
+    .nowrap{white-space:nowrap}
+    .hr{
+      height:1px;
+      background: rgba(255,255,255,.10);
+      margin: 12px 0;
+    }
+
+    html.ix-compact .panel .bd{ padding: 10px; }
+    html.ix-compact .btn{ padding: 7px 10px; border-radius: 12px; }
+    html.ix-compact .card{ padding: 10px; }
+  </style>
+</head>
+<body>
+  <div class="app" id="app"></div>
+  <div class="toast-wrap" id="toasts"></div>
+
+  <script>
+    // Ixmalu — single-page UI consuming Zorp41 API.
+    // Zero dependencies, runs as a file or served by /ixmalu on Zorp41.
+
+    const S = {
+      apiBase: localStorage.getItem("ixmalu.apiBase") || "",
+      apiKey: localStorage.getItem("ixmalu.apiKey") || "",
+      csrf: "",
+      me: null,
+      vaults: [],
+      selectedVaultId: localStorage.getItem("ixmalu.selectedVaultId") || "",
+      lastHealth: null,
+      lastError: null,
+      route: "dashboard",
