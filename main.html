@@ -453,3 +453,68 @@
     };
 
     const apiFetch = async (path, opt = {}) => {
+      const headers = Object.assign({}, opt.headers || {});
+      if (S.apiKey) headers["X-Zorp41-ApiKey"] = S.apiKey;
+      if (S.csrf) headers["X-Zorp41-Csrf"] = S.csrf;
+      if (opt.json){
+        headers["Content-Type"] = "application/json";
+        opt.body = JSON.stringify(opt.json);
+        delete opt.json;
+      }
+      const res = await fetch(apiUrl(path), Object.assign({}, opt, { headers }));
+      const ct = (res.headers.get("content-type") || "");
+      let body = null;
+      if (ct.includes("application/json")){
+        body = await res.json().catch(() => null);
+      } else {
+        body = await res.text().catch(() => "");
+      }
+      if (!res.ok){
+        const err = (body && body.error) ? body.error : ("http_" + res.status);
+        throw new Error(err);
+      }
+      return body;
+    };
+
+    const fetchCatalogStats = async () => {
+      try{
+        const r = await apiFetch("/api/catalog/stats");
+        return r && r.data ? r.data : null;
+      }catch(_e){
+        return null;
+      }
+    };
+
+    const toggleCompactUi = () => {
+      S.compactUi = !S.compactUi;
+      localStorage.setItem("ixmalu.compactUi", S.compactUi ? "1" : "0");
+      document.documentElement.classList.toggle("ix-compact", S.compactUi);
+      toast("ok", "Layout", S.compactUi ? "Compact density" : "Comfort density");
+      render();
+    };
+
+    const exportVaultIdsJson = async () => {
+      try{
+        await boot();
+        const ids = (S.vaults || []).map((v) => ({ id: v.id, name: v.name, chain: v.chain }));
+        const blob = new Blob([JSON.stringify(ids, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "ixmalu-vault-catalog.json";
+        a.click();
+        URL.revokeObjectURL(a.href);
+        toast("ok", "Exported", "Vault catalog JSON downloaded.");
+      }catch(e){
+        toast("bad", "Export failed", e.message || e);
+      }
+    };
+
+    window.addEventListener("keydown", (ev) => {
+      if (ev.ctrlKey && ev.shiftKey && (ev.key === "d" || ev.key === "D")){
+        ev.preventDefault();
+        toggleCompactUi();
+      }
+      if (ev.ctrlKey && ev.shiftKey && (ev.key === "e" || ev.key === "E")){
+        ev.preventDefault();
+        exportVaultIdsJson();
+      }
