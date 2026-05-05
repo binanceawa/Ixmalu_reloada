@@ -518,3 +518,68 @@
         ev.preventDefault();
         exportVaultIdsJson();
       }
+    });
+
+    if (S.compactUi) document.documentElement.classList.add("ix-compact");
+
+    const pickRoute = () => {
+      const h = (location.hash || "#dashboard").replace(/^#/,"");
+      const parts = h.split("/").filter(Boolean);
+      S.route = parts[0] || "dashboard";
+      if (parts[1] && parts[0] === "vault") S.selectedVaultId = parts[1];
+      if (parts[0] === "vault" && parts[2]) {
+        S.route = "vault:" + parts[2];
+      }
+    };
+
+    window.addEventListener("hashchange", () => {
+      pickRoute();
+      render();
+    });
+
+    const setApiBase = (v) => {
+      S.apiBase = (v || "").trim();
+      localStorage.setItem("ixmalu.apiBase", S.apiBase);
+    };
+    const setApiKey = (v) => {
+      S.apiKey = (v || "").trim();
+      localStorage.setItem("ixmalu.apiKey", S.apiKey);
+    };
+    const setSelectedVault = (id) => {
+      S.selectedVaultId = id || "";
+      localStorage.setItem("ixmalu.selectedVaultId", S.selectedVaultId);
+    };
+
+    const healthCheck = async () => {
+      try{
+        const h = await apiFetch("/health");
+        S.lastHealth = h && h.data ? h.data : h;
+        return true;
+      }catch(e){
+        S.lastHealth = null;
+        S.lastError = String(e.message || e);
+        return false;
+      }
+    };
+
+    const loadMe = async () => {
+      try{
+        const r = await apiFetch("/api/me");
+        S.me = r.data || null;
+        S.csrf = (S.me && S.me.csrf) ? S.me.csrf : "";
+      }catch(e){
+        S.me = null;
+        S.csrf = "";
+      }
+    };
+
+    const loadVaults = async () => {
+      const r = await apiFetch("/api/vaults");
+      S.vaults = r.data || [];
+      if (!S.selectedVaultId && S.vaults.length){
+        setSelectedVault(S.vaults[0].id);
+      }
+    };
+
+    const loadSignals = async (vaultId) => {
+      const r = await apiFetch(`/api/vault/${encodeURIComponent(vaultId)}/signals`);
