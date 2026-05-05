@@ -388,3 +388,68 @@
       lastHealth: null,
       lastError: null,
       route: "dashboard",
+      signals: [],
+      allocation: null,
+      priceCache: new Map(),
+      jobs: new Map(),
+      backtestPreview: null,
+      compactUi: localStorage.getItem("ixmalu.compactUi") === "1",
+      catalogStats: null
+    };
+
+    const el = (tag, attrs = {}, kids = []) => {
+      const n = document.createElement(tag);
+      for (const [k,v] of Object.entries(attrs || {})){
+        if (k === "class") n.className = v;
+        else if (k === "html") n.innerHTML = v;
+        else if (k.startsWith("on") && typeof v === "function") n.addEventListener(k.slice(2), v);
+        else if (v === null || v === undefined) {}
+        else n.setAttribute(k, String(v));
+      }
+      for (const kid of (kids || [])){
+        if (kid === null || kid === undefined) continue;
+        if (typeof kid === "string") n.appendChild(document.createTextNode(kid));
+        else n.appendChild(kid);
+      }
+      return n;
+    };
+
+    const fmtMoney = (x) => {
+      const n = Number(x);
+      if (!isFinite(n)) return "n/a";
+      return n.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 });
+    };
+    const fmtPct = (x) => {
+      const n = Number(x);
+      if (!isFinite(n)) return "n/a";
+      return (100*n).toFixed(2) + "%";
+    };
+    const clip = (s, n=80) => String(s || "").length > n ? String(s).slice(0,n) + "…" : String(s || "");
+    const iso = (ts) => {
+      if (!ts) return "n/a";
+      const d = new Date(Number(ts) * 1000);
+      if (!isFinite(d.getTime())) return "n/a";
+      return d.toISOString().replace(".000Z","Z");
+    };
+
+    const toast = (kind, title, detail) => {
+      const wrap = document.getElementById("toasts");
+      const t = el("div", { class: "toast " + kind }, [
+        el("div", { class: "i" }, [ kind === "ok" ? "OK" : kind === "bad" ? "ERR" : "!" ]),
+        el("div", { class: "t" }, [
+          el("b", {}, [title]),
+          el("div", {}, [String(detail || "")])
+        ])
+      ]);
+      wrap.appendChild(t);
+      setTimeout(() => { t.style.opacity = "0"; t.style.transform = "translateY(4px)"; }, 3400);
+      setTimeout(() => { try{ wrap.removeChild(t); }catch(e){} }, 4200);
+    };
+
+    const apiUrl = (path) => {
+      const base = (S.apiBase || "").replace(/\/+$/,"");
+      if (!base) return path;
+      return base + path;
+    };
+
+    const apiFetch = async (path, opt = {}) => {
