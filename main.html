@@ -713,3 +713,68 @@
                   }catch(e){
                     toast("bad","Auth failed", e.message || e);
                   }
+                  render();
+                }}, ["Verify"]),
+                el("button", { class: "btn danger", onclick: () => {
+                  setApiKey("");
+                  S.me = null;
+                  S.csrf = "";
+                  toast("warn","Cleared","API key removed from local storage.");
+                  render();
+                }}, ["Clear"])
+              ]),
+              el("div", { class: "hr" }, []),
+              el("div", { class: "muted small" }, [
+                "Mutations with an API key do not require CSRF. If you are using browser session cookies, Ixmalu will automatically adopt the CSRF token returned from `/api/me`."
+              ])
+            ])
+          ])
+        ])
+      ]);
+    };
+
+    const vaultById = (id) => (S.vaults || []).find(v => String(v.id) === String(id));
+
+    const viewDashboard = () => {
+      const v = vaultById(S.selectedVaultId) || (S.vaults[0] || null);
+      const cap = v ? Number(v.deposit_cap || 0) : 0;
+      const fees = v ? `${Number(v.mgmt_fee_bps_per_year||0)} / ${Number(v.perf_fee_bps||0)} bps` : "n/a";
+      const status = v ? String(v.status || "n/a") : "n/a";
+      const tone = status === "active" ? "good" : status === "paused" ? "warn" : "accent";
+
+      const pane = el("div", { class: "panel" }, [
+        el("div", { class: "hd" }, [
+          el("div", {}, [
+            el("div", { class: "title" }, ["Dashboard"]),
+            el("div", { class: "hint" }, ["Snapshot: vault cap, fees, health, and market sparkline."])
+          ]),
+          el("div", { style: "display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, [
+            el("button", { class: "btn", onclick: async () => { await boot(); toast("ok","Refreshed","Vaults refreshed."); }}, ["Refresh"]),
+            el("button", { class: "btn", onclick: () => exportVaultIdsJson() }, ["Export vaults"]),
+            el("button", { class: "btn", onclick: () => toggleCompactUi() }, ["Density"]),
+            el("a", { class: "btn primary", href: "#vault/" + encodeURIComponent(S.selectedVaultId || "") + "/overview" }, ["Open vault"])
+          ])
+        ]),
+        el("div", { class: "bd" }, [
+          el("div", { class: "grid3" }, [
+            cardKpi("Selected vault", v ? (v.name || v.id) : "None", v ? (v.chain || "") : "Load vaults first.", tone),
+            cardKpi("Deposit cap", v ? "$" + fmtMoney(cap) : "n/a", "Blueprint capacity used for signals & allocation hints.", "accent"),
+            cardKpi("Fees (mgmt/perf)", fees, "Used in risk budget heuristic; not an onchain value here.", "warn"),
+          ]),
+          el("div", { class: "grid2", style: "margin-top:12px" }, [
+            el("div", { class: "card" }, [
+              el("h3", {}, ["Connectivity"]),
+              el("div", { class: "kv small", style: "margin-top:10px" }, [
+                el("div", {}, ["Health"]),
+                el("div", {}, [ S.lastHealth ? el("span", { class: "tag good" }, ["OK"]) : el("span", { class: "tag bad" }, ["OFF"]) ]),
+                el("div", {}, ["User"]),
+                el("div", {}, [ S.me ? el("span", { class: "tag accent" }, [S.me.email || "api_key"]) : el("span", { class: "tag warn" }, ["anon"]) ]),
+                el("div", {}, ["Selected"]),
+                el("div", {}, [ v ? el("span", { class: "mono" }, [String(v.id)]) : el("span", { class: "muted" }, ["n/a"]) ]),
+                el("div", {}, ["Catalog"]),
+                el("div", {}, [
+                  S.catalogStats
+                    ? el("span", { class: "mono" }, [`v${S.catalogStats.vaults} · st${S.catalogStats.strategies} · sig${S.catalogStats.signals}`])
+                    : el("span", { class: "muted" }, ["n/a"])
+                ]),
+              ])
