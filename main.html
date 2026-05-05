@@ -843,3 +843,68 @@
             el("div", {}, ["Decimals"]), el("div", {}, [String(v.asset_decimals || "n/a")]),
             el("div", {}, ["Deposit cap"]), el("div", {}, ["$" + fmtMoney(v.deposit_cap)]),
             el("div", {}, ["Fees"]), el("div", {}, [String(v.mgmt_fee_bps_per_year||0) + " / " + String(v.perf_fee_bps||0) + " bps"]),
+            el("div", {}, ["Onchain addr"]), el("div", {}, [ v.address ? el("code", {}, [String(v.address)]) : el("span", { class: "muted" }, ["not set"]) ]),
+          ])
+        ]),
+        el("div", { class: "card" }, [
+          el("h3", {}, ["Quick actions"]),
+          el("div", { class: "muted small" }, ["These call Zorp41’s API. Mutations are allowed by API key; session users need CSRF."]),
+          el("div", { style: "display:flex;gap:10px;flex-wrap:wrap;margin-top:10px" }, [
+            el("button", { class: "btn primary", onclick: async () => {
+              try{
+                await apiFetch(`/api/vault/${encodeURIComponent(v.id)}/signals/generate`);
+                toast("ok","Signals","Generated now.");
+              }catch(e){
+                toast("bad","Signals failed", e.message || e);
+              }
+            }}, ["Generate signals now"]),
+            el("button", { class: "btn", onclick: async () => {
+              location.hash = "#vault/" + encodeURIComponent(v.id) + "/allocation";
+            }}, ["Open allocation"]),
+            el("button", { class: "btn", onclick: async () => {
+              location.hash = "#vault/" + encodeURIComponent(v.id) + "/backtest";
+            }}, ["Run backtest"]),
+          ]),
+          el("div", { class: "hr" }, []),
+          el("div", { class: "small muted" }, [
+            "Ixmalu is UI-only. Onchain execution is performed by your allocator/keeper tooling; Zorp41 provides the blueprint and sim outputs."
+          ])
+        ]),
+      ]));
+
+      return pane;
+    };
+
+    const viewSignals = (vaultId) => {
+      const v = vaultById(vaultId);
+      if (!v) return el("div", { class: "panel" }, [ el("div", { class: "bd" }, [ el("div", { class: "card" }, ["Unknown vault."]) ]) ]);
+
+      const body = el("div", { class: "bd" }, [
+        el("div", { class: "split" }, [
+          el("div", {}, [
+            el("div", { style: "font-weight:900;font-size:16px" }, ["Signals"]),
+            el("div", { class: "muted small" }, [ "Vault ", el("code", {}, [String(v.id)]), " · latest 120 signals" ])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, [
+            el("button", { class: "btn", onclick: async () => {
+              try{
+                await loadSignals(vaultId);
+                toast("ok","Signals","Loaded.");
+                render();
+              }catch(e){
+                toast("bad","Load failed", e.message || e);
+              }
+            }}, ["Refresh"]),
+            el("button", { class: "btn primary", onclick: async () => {
+              try{
+                await apiFetch(`/api/vault/${encodeURIComponent(v.id)}/signals/generate`);
+                await loadSignals(vaultId);
+                toast("ok","Signals","Generated.");
+                render();
+              }catch(e){
+                toast("bad","Generate failed", e.message || e);
+              }
+            }}, ["Generate now"])
+          ])
+        ]),
+        el("div", { class: "card", style: "margin-top:12px;overflow:auto" }, [
