@@ -648,3 +648,68 @@
     const navItem = (hash, k, title, sub) => {
       const active = location.hash === hash || (hash === "#dashboard" && (!location.hash || location.hash === "#"));
       return el("a", { href: hash, class: active ? "active" : "" }, [
+        el("div", { class: "k" }, [k]),
+        el("div", { class: "t" }, [
+          el("b", {}, [title]),
+          el("span", {}, [sub])
+        ])
+      ]);
+    };
+
+    const cardKpi = (title, value, sub, tone="accent") => {
+      const cls = tone === "good" ? "tag good" : tone === "warn" ? "tag warn" : tone === "bad" ? "tag bad" : "tag accent";
+      return el("div", { class: "card" }, [
+        el("h3", {}, [title]),
+        el("div", { style: "display:flex;align-items:center;justify-content:space-between;gap:10px" }, [
+          el("div", { style: "font-size:22px;font-weight:900" }, [value]),
+          el("span", { class: cls }, [tone.toUpperCase()])
+        ]),
+        el("div", { class: "muted small" }, [sub])
+      ]);
+    };
+
+    const viewWelcome = () => {
+      const h = S.lastHealth;
+      const dotCls = h ? "dot ok" : (S.lastError ? "dot bad" : "dot warn");
+      const statusText = h ? ("Connected · " + (h.platform || "Zorp41")) : (S.lastError ? ("Offline · " + S.lastError) : "Not checked");
+      return el("div", { class: "panel" }, [
+        el("div", { class: "hd" }, [
+          el("div", {}, [
+            el("div", { class: "title" }, ["Connection"]),
+            el("div", { class: "hint" }, ["Point Ixmalu at your Zorp41 backend and authenticate with an API key."])
+          ]),
+          el("div", { class: "pill" }, [ el("span", { class: dotCls }, []), el("span", { class: "small muted" }, [statusText]) ])
+        ]),
+        el("div", { class: "bd" }, [
+          el("div", { class: "grid2" }, [
+            el("div", { class: "card" }, [
+              el("h3", {}, ["API base URL"]),
+              el("div", { class: "muted small" }, ["If you opened Ixmalu from Zorp41’s `/ixmalu`, you can leave this empty."]),
+              el("div", { style: "margin-top:10px" }, [
+                el("input", { value: S.apiBase, placeholder: "http://127.0.0.1:8787", oninput: (e) => setApiBase(e.target.value) })
+              ]),
+              el("div", { style: "display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap" }, [
+                el("button", { class: "btn primary", onclick: async () => {
+                  const ok = await healthCheck();
+                  if (ok) toast("ok","Connected","Health endpoint OK.");
+                  else toast("bad","Connection failed", S.lastError || "unknown error");
+                  render();
+                }}, ["Test connection"]),
+                el("button", { class: "btn", onclick: async () => { await boot(); }}, ["Load vaults"])
+              ])
+            ]),
+
+            el("div", { class: "card" }, [
+              el("h3", {}, ["API key"]),
+              el("div", { class: "muted small" }, ["Create one in Zorp41: Home → API keys → New key."]),
+              el("div", { style: "margin-top:10px" }, [
+                el("input", { value: S.apiKey, placeholder: "Paste X-Zorp41-ApiKey value", oninput: (e) => setApiKey(e.target.value) })
+              ]),
+              el("div", { style: "display:flex;gap:10px;align-items:center;margin-top:10px;flex-wrap:wrap" }, [
+                el("button", { class: "btn primary", onclick: async () => {
+                  try{
+                    await loadMe();
+                    toast("ok","Authenticated", S.me ? (S.me.email || "api key") : "ok");
+                  }catch(e){
+                    toast("bad","Auth failed", e.message || e);
+                  }
