@@ -1233,3 +1233,68 @@
           ]),
           el("div", { class:"card", style:"margin-top:12px" }, [
             el("h3", {}, ["Advanced"]),
+            el("div", { class:"muted small" }, [
+              "If you use browser-session auth instead of API key, make sure you’re logged into Zorp41 in the same origin and Ixmalu will pull CSRF from `/api/me`."
+            ])
+          ])
+        ])
+      ]);
+      return pane;
+    };
+
+    const viewDocs = () => {
+      const pane = el("div", { class:"panel" }, [
+        el("div", { class:"hd" }, [
+          el("div", {}, [
+            el("div", { class:"title" }, ["Docs"]),
+            el("div", { class:"hint" }, ["How Ixmalu and Zorp41 work together."])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center" }, [
+            el("a", { class:"btn", href:"#settings" }, ["Settings"])
+          ])
+        ]),
+        el("div", { class:"bd" }, [
+          el("div", { class:"card" }, [
+            el("h3", {}, ["Quick start"]),
+            el("div", { class:"small muted" }, [
+              el("div", {}, ["1) Start Zorp41 backend (`python Zorp41/app.py`)."]),
+              el("div", {}, ["2) Copy the bootstrap API key from `http://127.0.0.1:8787/` (printed once on first run)."]),
+              el("div", {}, ["3) Open Ixmalu (this page) and paste the API key in Settings or Welcome."]),
+              el("div", {}, ["4) Select a vault → Signals → Allocation → Backtest."]),
+              el("div", {}, ["Shortcuts: Ctrl+Shift+D toggles compact density; Ctrl+Shift+E exports vault IDs JSON."]),
+            ])
+          ]),
+          el("div", { class:"grid2", style:"margin-top:12px" }, [
+            el("div", { class:"card" }, [
+              el("h3", {}, ["Endpoints used"]),
+              el("div", { class:"small muted" }, [
+                el("div", {}, [ el("code", {}, ["/health"]), " connectivity check" ]),
+                el("div", {}, [ el("code", {}, ["/api/me"]), " auth + CSRF discovery" ]),
+                el("div", {}, [ el("code", {}, ["/api/vaults"]), " vault catalog" ]),
+                el("div", {}, [ el("code", {}, ["/api/vault/<id>/signals"]), " signal feed" ]),
+                el("div", {}, [ el("code", {}, ["/api/vault/<id>/allocation"]), " allocation hint request" ]),
+                el("div", {}, [ el("code", {}, ["/api/price/<sym>/series"]), " market sparkline" ]),
+                el("div", {}, [ el("code", {}, ["/api/catalog/stats"]), " vault/strategy/signal counts" ]),
+              ])
+            ]),
+            el("div", { class:"card" }, [
+              el("h3", {}, ["Security posture"]),
+              el("div", { class:"small muted" }, [
+                el("div", {}, ["Zorp41 disables remote writes by default (localhost-only)."]),
+                el("div", {}, ["Ixmalu stores API base & key in localStorage (client-side)."]),
+                el("div", {}, ["Use a dedicated browser profile if you want extra separation."]),
+              ])
+            ])
+          ])
+        ])
+      ]);
+      return pane;
+    };
+
+    const sidebar = () => {
+      const vItems = (S.vaults || []).slice(0, 12);
+      const vaultLinks = vItems.map((v, i) => {
+        const k = String(v.asset_symbol || "VL").slice(0,2).toUpperCase();
+        const sub = `${String(v.chain||"")}`.slice(0, 28);
+        const hash = "#vault/" + encodeURIComponent(v.id) + "/overview";
+        const active = location.hash.startsWith("#vault/" + encodeURIComponent(v.id));
