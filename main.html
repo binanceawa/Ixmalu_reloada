@@ -1363,3 +1363,58 @@
     };
 
     const mainView = () => {
+      if (!S.lastHealth && !S.apiKey){
+        return viewWelcome();
+      }
+
+      if (S.route === "settings") return viewSettings();
+      if (S.route === "docs") return viewDocs();
+      if (S.route === "dashboard") return viewDashboard();
+
+      if (S.route.startsWith("vault")){
+        const vaultId = S.selectedVaultId || (S.vaults[0] ? S.vaults[0].id : "");
+        if (!vaultId) return viewWelcome();
+        return viewVaultOverview(vaultId);
+      }
+
+      if (S.route.startsWith("vault:")){
+        const vaultId = S.selectedVaultId || (S.vaults[0] ? S.vaults[0].id : "");
+        const tab = S.route.split(":", 2)[1];
+        if (tab === "overview") return viewVaultOverview(vaultId);
+        if (tab === "signals") return viewSignals(vaultId);
+        if (tab === "allocation") return viewAllocation(vaultId);
+        if (tab === "backtest") return viewBacktest(vaultId);
+        return viewVaultOverview(vaultId);
+      }
+
+      return viewWelcome();
+    };
+
+    const render = () => {
+      const root = document.getElementById("app");
+      root.innerHTML = "";
+      root.appendChild(topbar());
+      root.appendChild(el("div", { class:"layout" }, [
+        sidebar(),
+        mainView()
+      ]));
+    };
+
+    const boot = async () => {
+      pickRoute();
+      await healthCheck();
+      await loadMe();
+      await loadVaults().catch(() => {});
+      S.catalogStats = await fetchCatalogStats();
+      if (S.selectedVaultId){
+        // Non-blocking preload
+        loadSignals(S.selectedVaultId).catch(() => {});
+      }
+      render();
+    };
+
+    // Start
+    boot().catch(() => render());
+  </script>
+</body>
+</html>
