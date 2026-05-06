@@ -1168,3 +1168,68 @@
                 el("div", {}, ["Fee"]), el("div", {}, [ (S.backtestPreview && isFinite(S.backtestPreview.feeBps)) ? String(S.backtestPreview.feeBps) + " bps" : "n/a" ]),
                 el("div", {}, ["Slippage"]), el("div", {}, [ (S.backtestPreview && isFinite(S.backtestPreview.slipBps)) ? String(S.backtestPreview.slipBps) + " bps" : "n/a" ]),
               ])
+            ]),
+          ])
+        ])
+      ]);
+
+      // Bootstrap a default preview
+      setTimeout(async () => {
+        try{
+          const pts = await loadPriceSeries("ETH", 30, 3600);
+          const c = document.getElementById("bt-spark");
+          drawSpark(c, pts, "#77c0ff");
+        }catch(e){}
+      }, 10);
+
+      return pane;
+    };
+
+    const viewSettings = () => {
+      const pane = el("div", { class:"panel" }, [
+        el("div", { class:"hd" }, [
+          el("div", {}, [
+            el("div", { class:"title" }, ["Settings"]),
+            el("div", { class:"hint" }, ["Stored in your browser (localStorage)."])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center" }, [
+            el("button", { class:"btn danger", onclick: () => {
+              localStorage.removeItem("ixmalu.apiBase");
+              localStorage.removeItem("ixmalu.apiKey");
+              localStorage.removeItem("ixmalu.selectedVaultId");
+              S.apiBase=""; S.apiKey=""; S.selectedVaultId=""; S.me=null; S.csrf="";
+              toast("warn","Reset","Local settings cleared.");
+              render();
+            }}, ["Reset"])
+          ])
+        ]),
+        el("div", { class:"bd" }, [
+          el("div", { class:"grid2" }, [
+            el("div", { class:"card" }, [
+              el("h3", {}, ["API base"]),
+              el("div", { class:"muted small" }, ["Leave empty when served from Zorp41; set for remote Zorp41 URL."]),
+              el("div", { style:"margin-top:10px" }, [
+                el("input", { value: S.apiBase, oninput: (e) => setApiBase(e.target.value), placeholder:"http://127.0.0.1:8787" })
+              ])
+            ]),
+            el("div", { class:"card" }, [
+              el("h3", {}, ["API key"]),
+              el("div", { class:"muted small" }, ["Header ", el("code", {}, ["X-Zorp41-ApiKey"]), " will be attached to all API calls."]),
+              el("div", { style:"margin-top:10px" }, [
+                el("input", { value: S.apiKey, oninput: (e) => setApiKey(e.target.value), placeholder:"paste key" })
+              ]),
+              el("div", { style:"display:flex;gap:10px;flex-wrap:wrap;margin-top:10px" }, [
+                el("button", { class:"btn primary", onclick: async () => {
+                  await boot();
+                  toast("ok","Loaded","Vaults loaded.");
+                }}, ["Load vaults"]),
+                el("button", { class:"btn", onclick: async () => {
+                  const ok = await healthCheck();
+                  toast(ok ? "ok":"bad", ok ? "Connected":"Offline", ok ? "Health OK" : (S.lastError || "error"));
+                  render();
+                }}, ["Test health"])
+              ])
+            ]),
+          ]),
+          el("div", { class:"card", style:"margin-top:12px" }, [
+            el("h3", {}, ["Advanced"]),
