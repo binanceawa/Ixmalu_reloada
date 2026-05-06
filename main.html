@@ -1038,3 +1038,68 @@
               el("thead", {}, [
                 el("tr", {}, [
                   el("th", {}, ["Strategy"]),
+                  el("th", {}, ["Kind"]),
+                  el("th", {}, ["Grade"]),
+                  el("th", { class:"right" }, ["Weight"]),
+                  el("th", { class:"right" }, ["Debt (USD)"]),
+                ])
+              ]),
+              el("tbody", { id:"alloc-tbody" }, [
+                el("tr", {}, [ el("td", { colspan:"5", class:"muted" }, ["Run an allocation request above."]) ])
+              ])
+            ])
+          ])
+        ])
+      ]);
+
+      setTimeout(() => {
+        const tb = document.getElementById("alloc-tbody");
+        if (!tb) return;
+        tb.innerHTML = "";
+        const rec = S.allocation;
+        if (!rec || !rec.allocations){
+          tb.appendChild(el("tr", {}, [ el("td", { colspan:"5", class:"muted" }, ["No allocation yet."]) ]));
+          return;
+        }
+        for (const a of rec.allocations){
+          const grade = String(a.risk_grade || "B");
+          const tone = grade === "A" ? "good" : grade === "B" ? "accent" : grade === "C" ? "warn" : "bad";
+          tb.appendChild(el("tr", {}, [
+            el("td", {}, [ el("b", {}, [String(a.name || a.strategy_id)]), el("div", { class:"muted small mono" }, [String(a.strategy_id || "")]) ]),
+            el("td", { class:"muted small" }, [String(a.kind || "")]),
+            el("td", {}, [ el("span", { class:"tag " + (tone==="good"?"good":tone==="warn"?"warn":tone==="bad"?"bad":"accent") }, [grade]) ]),
+            el("td", { class:"right" }, [fmtPct(Number(a.weight_capped || a.weight || 0))]),
+            el("td", { class:"right" }, ["$" + fmtMoney(Number(a.recommended_debt || 0))]),
+          ]));
+        }
+      }, 10);
+
+      return pane;
+    };
+
+    const viewBacktest = (vaultId) => {
+      const v = vaultById(vaultId);
+      if (!v) return el("div", { class: "panel" }, [ el("div", { class: "bd" }, [ el("div", { class: "card" }, ["Unknown vault."]) ]) ]);
+
+      const symbols = ["ETH","BTC","SOL","ARB","OP"];
+      const strategies = ["momentum","mean_reversion","carry","blend"];
+
+      const form = el("div", { class:"card" }, [
+        el("h3", {}, ["Backtest runner (starts a Zorp41 job)"]),
+        el("div", { class:"muted small" }, [
+          "Ixmalu starts a backtest job on Zorp41; then you can fetch the result from the job JSON endpoint."
+        ]),
+        el("div", { class:"grid3", style:"margin-top:10px" }, [
+          el("div", { class:"field" }, [ el("label",{},["Symbol"]), el("select", { id:"bt-symbol" }, symbols.map(s => el("option", { value:s }, [s]))) ]),
+          el("div", { class:"field" }, [ el("label",{},["Strategy"]), el("select", { id:"bt-strat" }, strategies.map(s => el("option", { value:s }, [s]))) ]),
+          el("div", { class:"field" }, [ el("label",{},["Days"]), el("input", { id:"bt-days", value:"120" }) ]),
+        ]),
+        el("div", { class:"grid3", style:"margin-top:10px" }, [
+          el("div", { class:"field" }, [ el("label",{},["Step (minutes)"]), el("input", { id:"bt-step", value:"60" }) ]),
+          el("div", { class:"field" }, [ el("label",{},["Fee (bps)"]), el("input", { id:"bt-fee", value:"6" }) ]),
+          el("div", { class:"field" }, [ el("label",{},["Slippage (bps)"]), el("input", { id:"bt-slip", value:"9" }) ]),
+        ]),
+        el("div", { style:"display:flex;gap:10px;flex-wrap:wrap;margin-top:12px" }, [
+          el("button", { class:"btn primary", onclick: async () => {
+            const sym = document.getElementById("bt-symbol").value;
+            const strat = document.getElementById("bt-strat").value;
