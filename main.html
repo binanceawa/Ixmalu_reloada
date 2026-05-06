@@ -908,3 +908,68 @@
           ])
         ]),
         el("div", { class: "card", style: "margin-top:12px;overflow:auto" }, [
+          el("table", {}, [
+            el("thead", {}, [
+              el("tr", {}, [
+                el("th", {}, ["When"]),
+                el("th", {}, ["Horizon"]),
+                el("th", {}, ["Score"]),
+                el("th", {}, ["Rationale"]),
+              ])
+            ]),
+            el("tbody", { id: "sig-tbody" }, [
+              el("tr", {}, [ el("td", { colspan:"4", class:"muted" }, ["Loading…"]) ])
+            ])
+          ])
+        ])
+      ]);
+
+      const pane = el("div", { class: "panel" }, [
+        el("div", { class: "hd" }, [
+          el("div", {}, [
+            el("div", { class: "title" }, [ v.name || "Vault" ]),
+            el("div", { class: "hint" }, [ "Signals → allocation hints → backtests" ])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, [
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/overview" }, ["Overview"]),
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/allocation" }, ["Allocation"]),
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/backtest" }, ["Backtest"]),
+          ])
+        ]),
+        body
+      ]);
+
+      setTimeout(async () => {
+        try{
+          await loadSignals(vaultId);
+          const tb = document.getElementById("sig-tbody");
+          tb.innerHTML = "";
+          if (!S.signals.length){
+            tb.appendChild(el("tr", {}, [ el("td", { colspan:"4", class:"muted" }, ["No signals yet."]) ]));
+            return;
+          }
+          for (const s of S.signals.slice(0, 120)){
+            const score = Number(s.score || 0);
+            const tone = score >= 0.66 ? "good" : score <= 0.33 ? "bad" : "warn";
+            tb.appendChild(el("tr", {}, [
+              el("td", { class:"muted small nowrap" }, [iso(s.ts)]),
+              el("td", {}, [ el("span", { class:"tag accent" }, [String(s.horizon || "")]) ]),
+              el("td", {}, [ el("span", { class:"tag " + (tone==="good"?"good":tone==="bad"?"bad":"warn") }, [score.toFixed(3)]) ]),
+              el("td", { class:"muted small" }, [clip(s.rationale || "", 240)])
+            ]));
+          }
+        }catch(e){
+          toast("bad","Signals failed", e.message || e);
+        }
+      }, 10);
+
+      return pane;
+    };
+
+    const viewAllocation = (vaultId) => {
+      const v = vaultById(vaultId);
+      if (!v) return el("div", { class: "panel" }, [ el("div", { class: "bd" }, [ el("div", { class: "card" }, ["Unknown vault."]) ]) ]);
+
+      const pane = el("div", { class: "panel" }, [
+        el("div", { class: "hd" }, [
+          el("div", {}, [
