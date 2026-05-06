@@ -973,3 +973,68 @@
       const pane = el("div", { class: "panel" }, [
         el("div", { class: "hd" }, [
           el("div", {}, [
+            el("div", { class: "title" }, ["Allocation"]),
+            el("div", { class: "hint" }, ["Request allocation hint (risk-adjusted targets with caps)."])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, [
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/overview" }, ["Overview"]),
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/signals" }, ["Signals"]),
+            el("a", { class: "btn", href: "#vault/" + encodeURIComponent(v.id) + "/backtest" }, ["Backtest"]),
+          ])
+        ]),
+        el("div", { class: "bd" }, [
+          el("div", { class: "grid2" }, [
+            el("div", { class: "card" }, [
+              el("h3", {}, ["Request allocation"]),
+              el("div", { class:"muted small" }, ["Calls ", el("code", {}, ["/api/vault/<id>/allocation"]), " on Zorp41."]),
+              el("div", { style:"margin-top:10px;display:flex;gap:10px;flex-wrap:wrap" }, [
+                el("button", { class:"btn primary", onclick: async () => {
+                  try{
+                    const rec = await requestAllocation(v.id, "30d");
+                    toast("ok","Allocation ready", "30d horizon computed.");
+                    render();
+                  }catch(e){
+                    toast("bad","Allocation failed", e.message || e);
+                  }
+                }}, ["30d"]),
+                el("button", { class:"btn", onclick: async () => {
+                  try{
+                    await requestAllocation(v.id, "7d");
+                    toast("ok","Allocation ready", "7d horizon computed.");
+                    render();
+                  }catch(e){
+                    toast("bad","Allocation failed", e.message || e);
+                  }
+                }}, ["7d"]),
+                el("button", { class:"btn", onclick: async () => {
+                  try{
+                    await requestAllocation(v.id, "1d");
+                    toast("ok","Allocation ready", "1d horizon computed.");
+                    render();
+                  }catch(e){
+                    toast("bad","Allocation failed", e.message || e);
+                  }
+                }}, ["1d"]),
+              ]),
+              el("div", { class:"hr" }, []),
+              el("div", { class:"small muted" }, [
+                "Interpretation: weights are normalized targets; recommended debt is capped by per-strategy max debt and the vault cap."
+              ])
+            ]),
+            el("div", { class:"card" }, [
+              el("h3", {}, ["Current vault params"]),
+              el("div", { class:"kv small", style:"margin-top:10px" }, [
+                el("div", {}, ["Cap"]), el("div", {}, ["$" + fmtMoney(v.deposit_cap)]),
+                el("div", {}, ["Fees"]), el("div", {}, [String(v.mgmt_fee_bps_per_year||0) + " / " + String(v.perf_fee_bps||0) + " bps"]),
+                el("div", {}, ["Asset"]), el("div", {}, [String(v.asset_symbol || "n/a")]),
+                el("div", {}, ["Status"]), el("div", {}, [String(v.status || "n/a")]),
+              ])
+            ])
+          ]),
+          el("div", { class:"card", style:"margin-top:12px;overflow:auto" }, [
+            el("h3", {}, ["Allocations"]),
+            el("div", { class:"muted small" }, ["Shows capped weights and recommended debt amounts."]),
+            el("table", { style:"margin-top:10px" }, [
+              el("thead", {}, [
+                el("tr", {}, [
+                  el("th", {}, ["Strategy"]),
