@@ -1103,3 +1103,68 @@
           el("button", { class:"btn primary", onclick: async () => {
             const sym = document.getElementById("bt-symbol").value;
             const strat = document.getElementById("bt-strat").value;
+            const days = Number(document.getElementById("bt-days").value || "120");
+            const stepMin = Number(document.getElementById("bt-step").value || "60");
+            const feeBps = Number(document.getElementById("bt-fee").value || "6");
+            const slipBps = Number(document.getElementById("bt-slip").value || "9");
+            try{
+              const r = await apiFetch(`/api/backtest`, { method: "POST", json: { symbol: sym, strategy: strat, days, step_min: stepMin, fee_bps: feeBps, slippage_bps: slipBps } });
+              const jobId = r && r.data ? r.data.job_id : null;
+              toast("ok", "Backtest started", jobId ? ("job " + jobId) : "started");
+              if (jobId){
+                window.open(apiUrl(`/api/job/${encodeURIComponent(jobId)}`), "_blank", "noopener,noreferrer");
+              }
+              S.backtestPreview = { symbol:sym, strategy:strat, days:days, stepMin:stepMin, feeBps:feeBps, slipBps:slipBps, jobId: jobId || "" };
+              render();
+            }catch(e){
+              toast("bad","Backtest failed", e.message || e);
+            }
+          }}, ["Start backtest job"]),
+          el("button", { class:"btn", onclick: async () => {
+            // Quick client-side sim preview using price series (not the full server backtest).
+            try{
+              const sym = document.getElementById("bt-symbol").value;
+              const days = Number(document.getElementById("bt-days").value || 120);
+              const pts = await loadPriceSeries(sym, Math.min(365, Math.max(10, days)), 3600);
+              toast("ok","Preview ready", sym + " series loaded (" + pts.length + " pts).");
+              const c = document.getElementById("bt-spark");
+              drawSpark(c, pts, "#b9ff8e");
+            }catch(e){
+              toast("bad","Preview failed", e.message || e);
+            }
+          }}, ["Preview price series"])
+        ])
+      ]);
+
+      const pane = el("div", { class:"panel" }, [
+        el("div", { class:"hd" }, [
+          el("div", {}, [
+            el("div", { class:"title" }, ["Backtest"]),
+            el("div", { class:"hint" }, ["Run deterministic sims via Zorp41 jobs; visualize price proxy here."])
+          ]),
+          el("div", { style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap" }, [
+            el("a", { class:"btn", href:"#vault/" + encodeURIComponent(v.id) + "/overview" }, ["Overview"]),
+            el("a", { class:"btn", href:"#vault/" + encodeURIComponent(v.id) + "/signals" }, ["Signals"]),
+            el("a", { class:"btn", href:"#vault/" + encodeURIComponent(v.id) + "/allocation" }, ["Allocation"]),
+          ])
+        ]),
+        el("div", { class:"bd" }, [
+          form,
+          el("div", { class:"grid2", style:"margin-top:12px" }, [
+            el("div", { class:"card" }, [
+              el("h3", {}, ["Local preview chart"]),
+              el("div", { class:"muted small" }, ["This is just the price series sparkline; server backtest results are in Zorp41 jobs."]),
+              el("div", { style:"margin-top:10px" }, [
+                el("canvas", { id:"bt-spark", style:"width:100%;height:220px;border-radius:16px" }, [])
+              ])
+            ]),
+            el("div", { class:"card" }, [
+              el("h3", {}, ["Last inputs"]),
+              el("div", { class:"muted small" }, ["Stored locally in your browser as a convenience."]),
+              el("div", { class:"kv small", style:"margin-top:10px" }, [
+                el("div", {}, ["Symbol"]), el("div", {}, [ (S.backtestPreview && S.backtestPreview.symbol) ? S.backtestPreview.symbol : "n/a" ]),
+                el("div", {}, ["Strategy"]), el("div", {}, [ (S.backtestPreview && S.backtestPreview.strategy) ? S.backtestPreview.strategy : "n/a" ]),
+                el("div", {}, ["Days"]), el("div", {}, [ (S.backtestPreview && S.backtestPreview.days) ? String(S.backtestPreview.days) : "n/a" ]),
+                el("div", {}, ["Fee"]), el("div", {}, [ (S.backtestPreview && isFinite(S.backtestPreview.feeBps)) ? String(S.backtestPreview.feeBps) + " bps" : "n/a" ]),
+                el("div", {}, ["Slippage"]), el("div", {}, [ (S.backtestPreview && isFinite(S.backtestPreview.slipBps)) ? String(S.backtestPreview.slipBps) + " bps" : "n/a" ]),
+              ])
