@@ -1298,3 +1298,68 @@
         const sub = `${String(v.chain||"")}`.slice(0, 28);
         const hash = "#vault/" + encodeURIComponent(v.id) + "/overview";
         const active = location.hash.startsWith("#vault/" + encodeURIComponent(v.id));
+        return el("a", { href: hash, class: active ? "active" : "", onclick: () => setSelectedVault(v.id) }, [
+          el("div", { class:"k" }, [k]),
+          el("div", { class:"t" }, [
+            el("b", {}, [String(v.name || "Vault")]),
+            el("span", {}, [sub])
+          ])
+        ]);
+      });
+
+      return el("div", { class:"panel" }, [
+        el("div", { class:"hd" }, [
+          el("div", {}, [
+            el("div", { class:"title" }, ["Navigation"]),
+            el("div", { class:"hint" }, ["Workspace + vault shortcuts"])
+          ]),
+          el("button", { class:"btn ghost", onclick: async () => { await boot(); toast("ok","Updated","Vault list refreshed."); }}, ["↻"])
+        ]),
+        el("div", { class:"nav" }, [
+          navItem("#dashboard","DB","Dashboard","Vault snapshot + health"),
+          navItem("#settings","ST","Settings","API base + key"),
+          navItem("#docs","DX","Docs","How to use"),
+          el("div", { style:"height:1px;background:rgba(255,255,255,.10);margin:8px 6px" }, []),
+          el("div", { class:"muted small", style:"padding:0 8px 6px" }, ["Vaults"]),
+          ...(vaultLinks.length ? vaultLinks : [ el("div", { class:"muted small", style:"padding:0 8px 10px" }, ["No vaults loaded yet."]) ])
+        ])
+      ]);
+    };
+
+    const topbar = () => {
+      const h = S.lastHealth;
+      const dotCls = h ? "dot ok" : (S.lastError ? "dot bad" : "dot warn");
+      const statusText = h ? ("Zorp41 OK · " + (h.platform || "platform")) : (S.lastError ? ("Offline · " + S.lastError) : "Not checked");
+      const meText = S.me ? (S.me.email || "api_key") : "anon";
+      return el("div", { class:"topbar" }, [
+        el("div", { class:"brand" }, [
+          el("div", { class:"logo" }, []),
+          el("div", {}, [
+            el("h1", {}, ["Ixmalu"]),
+            el("p", { class:"sub" }, ["AI investment vault interface · ", el("span", { class:"mono" }, [meText])])
+          ])
+        ]),
+        el("div", { class:"top-actions" }, [
+          el("div", { class:"pill" }, [
+            el("span", { class: dotCls }, []),
+            el("span", { class:"small muted" }, [statusText])
+          ]),
+          el("button", { class:"btn", onclick: async () => {
+            const ok = await healthCheck();
+            if (ok) toast("ok","Health","Connected.");
+            else toast("bad","Health","Offline.");
+            render();
+          }}, ["Health"]),
+          el("button", { class:"btn primary", onclick: async () => {
+            try{
+              await boot();
+              toast("ok","Loaded","Vaults refreshed.");
+            }catch(e){
+              toast("bad","Load failed", e.message || e);
+            }
+          }}, ["Load"])
+        ])
+      ]);
+    };
+
+    const mainView = () => {
